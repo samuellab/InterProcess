@@ -26,8 +26,7 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 * GNU General Public License for more details.
 *
-* You should have received a copy of the GNU General Public License
-* along with MindControl. If not, see <http://www.gnu.org/licenses/>.
+* See <http://www.gnu.org/licenses/>.
 *
 * For the most up to date version of this software, see:
 * https://github.com/samuellab/interprocess
@@ -45,9 +44,10 @@
 
 
 
-/** Hard code in the buffer size **/
-#define BUF_SIZE 25600
-
+/** Hard code in the buffer sizes **/
+#define BUF_SIZE 256000
+#define FIELD_NAME_SIZE 16
+#define FIELD_DATA_CONTAINER_SIZE 512
 
 #define IP_SUCCESS 0
 #define IP_ERROR -1

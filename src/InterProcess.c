@@ -18,11 +18,10 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 * GNU General Public License for more details.
 *
-* You should have received a copy of the GNU General Public License
-* along with MindControl. If not, see <http://www.gnu.org/licenses/>.
+* See <http://www.gnu.org/licenses/>.
 *
 * For the most up to date version of this software, see:
-* https://github.com/samuellab/interprocess
+* http://github.com/samuellab/interprocess
 *
 */
 
@@ -37,6 +36,7 @@
 
 
 #define MAX_MEM_NAME_LENGTH 512
+#define MAX_FIELDS 50
 
 struct SharedMemory_t {
 	char name[MAX_MEM_NAME_LENGTH];
@@ -45,7 +45,18 @@ struct SharedMemory_t {
 };
 
 
+typedef struct field_t {
+	char name[FIELD_NAME_SIZE];
+	char* data[FIELD_DATA_CONTAINER_SIZE];
+	int size; /* Size of data container used for data*/
+};
 
+struct SharedData {
+	int numFields; /* number of fields in the shared data */
+	field_t fields[MAX_FIELDS];
+	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
+
+};
 
 /*************
  *  Create and Destroy Shared Memory
