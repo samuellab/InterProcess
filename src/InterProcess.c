@@ -13,6 +13,10 @@
 
  "Creating Named Shared Memory" from the Microsoft Developers Network"
 
+
+ Note, to compile, run:
+ C:\Documents and Settings\andy\workspace\InterProcess\src>g++ -c -v -Wall -mwindows InterProcess.c  && g++ InterProcess.o -o Hello2.exe && Hello2.exe
+
  */
 
 #include <stdio.h>
