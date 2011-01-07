@@ -45,9 +45,9 @@
 
 
 /** Hard code in the buffer sizes **/
-#define BUF_SIZE 256000
-#define FIELD_NAME_SIZE 16
-#define FIELD_DATA_CONTAINER_SIZE 512
+#define IP_BUF_SIZE 256000
+#define IP_FIELD_NAME_SIZE 16
+#define IP_FIELD_DATA_CONTAINER_SIZE 512
 
 #define IP_SUCCESS 0
 #define IP_ERROR -1

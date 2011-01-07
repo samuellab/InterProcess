@@ -35,28 +35,49 @@
 #include "interprocess.h"
 
 
-#define MAX_MEM_NAME_LENGTH 512
-#define MAX_FIELDS 50
+#define IP_MAX_MEM_NAME_LENGTH 512
 
 struct SharedMemory_t {
-	char name[MAX_MEM_NAME_LENGTH];
+	char name[IP_MAX_MEM_NAME_LENGTH];
 	int BufferSize;
 	char* ptrToMutex;
 };
 
-
-typedef struct field_t {
-	char name[FIELD_NAME_SIZE];
-	char* data[FIELD_DATA_CONTAINER_SIZE];
+struct field_t {
+	char name[IP_FIELD_NAME_SIZE];
+	char* data[IP_FIELD_DATA_CONTAINER_SIZE];
 	int size; /* Size of data container used for data*/
 };
 
-struct SharedData {
+struct SharedData_t {
 	int numFields; /* number of fields in the shared data */
-	field_t fields[MAX_FIELDS];
+	struct field_t fields[ (IP_BUF_SIZE / sizeof(struct field_t)) - 1];
 	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
-
 };
+
+
+
+/*************
+ *
+ * Create and Destroy Shared Data
+ *
+ */
+
+struct SharedData_t createSharedData(){
+	struct SharedData_t sdata= malloc(sizeof(struct SharedData_t));
+	if (sdata != NULL){
+		sdata.numFields=0;
+
+		/** Blank out the data with zeros **/
+		/** Create the mutex **/
+
+
+	}
+	return sdata;
+
+}
+
+
 
 /*************
  *  Create and Destroy Shared Memory
@@ -73,11 +94,12 @@ struct SharedData {
 SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 	SharedMemory_handle sm = malloc(sizeof(struct SharedMemory_t));
 	if (sm != NULL){ /* if the object is valid */
-		strncpy( sm.name, name, MAX_MEM_NAME_LENGTH-1);
-		sm.name[MAX_MEM_NAME_LENGTH-1]='\0';
-		sm.BufferSize=BUF_SIZE;
+		strncpy( sm.name, name, IP_MAX_MEM_NAME_LENGTH-1);
+		sm.name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
+		sm.BufferSize=IP_BUF_SIZE;
 	}
 
+	return sm;
 }
 
 
