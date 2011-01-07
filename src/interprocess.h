@@ -3,10 +3,42 @@
  *
  *  Created on: Jan 7, 2011
  *      Author: andy
+ *
+ * InterProcess is a fast, compact library for sharing fields of data between two processes
+ * on Windows. It exposes only a very simple interface and abstracts away all of the
+ * underlying mechanics.
+ *
+ * Under the hood, InterProcess avoids conflicts using mutex and uses the Windows
+ * Named Shared Memory to share fields of data.
  */
+
+
+/*
+* Copyright 2010 Andrew M. Leifer  <leifer@fas.harvard.edu>
+*
+* Interprocess is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* Interprocess is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with MindControl. If not, see <http://www.gnu.org/licenses/>.
+*
+* For the most up to date version of this software, see:
+* https://github.com/samuellab/interprocess
+*
+*/
+
 
 #ifndef INTERPROCESS_H_
 #define INTERPROCESS_H_
+
+
 
 
 
@@ -44,7 +76,7 @@ typedef struct SharedMemory_t *SharedMemory_handle;
  * Start the shared memory host and create a shared memory object.
  * This is to be run on the host process.
  */
-SharedMemory_handle ip_StartHost(char* name);
+SharedMemory_handle ip_CreateSharedMemoryHost(char* name);
 
 
 
@@ -52,7 +84,7 @@ SharedMemory_handle ip_StartHost(char* name);
  * Start the shared memory client and create a shared memory object.
  * This is to be run on the client process.
  */
-SharedMemory_handle ip_StartClient(char* name);
+SharedMemory_handle ip_CreateSharedMemoryClient(char* name);
 
 
 /*
