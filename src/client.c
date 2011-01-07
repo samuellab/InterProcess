@@ -49,9 +49,10 @@ int _tmain()
 
       return 1;
    }
+   int *intptr = (int *) pBuf;
 
    _tprintf("The other process says:\n");
-   _tprintf(TEXT(pBuf));
+   printf("%d and %d\n",intptr[0], intptr[1]);
 
    UnmapViewOfFile((PVOID) pBuf);
 

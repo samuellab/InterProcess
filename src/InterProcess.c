@@ -17,6 +17,7 @@
  Note, to compile, run:
  C:\Documents and Settings\andy\workspace\InterProcess\src>g++ -c -v -Wall -mwindows InterProcess.c  && g++ InterProcess.o -o Hello2.exe && Hello2.exe
 
+
  */
 
 #include <stdio.h>
@@ -30,7 +31,7 @@
 
 	#define BUF_SIZE 256
 	TCHAR szName[]=TEXT("Global\\MyFileMappingObject");
-	TCHAR szMsg[]=TEXT("Message from first process.");
+//	TCHAR szMsg[]=TEXT("Message from first process.");
 
 
 int main(void) {
@@ -75,9 +76,14 @@ int main(void) {
 	   }
 
 
+	   /** This is the number we want to pass **/
+//	   int myVal =42;
+	   int myVal[2] = {42, 37};
+
+
 
 	   /* Copy into the shared memory */
-	   CopyMemory((PVOID)pBuf, szMsg, (_tcslen(szMsg) * sizeof(TCHAR)));
+	   CopyMemory((PVOID)pBuf, &myVal, sizeof(myVal));
 
 
 	   /* Wait for user input **/
