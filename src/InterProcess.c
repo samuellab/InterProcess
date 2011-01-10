@@ -37,6 +37,8 @@
 
 #define IP_MAX_MEM_NAME_LENGTH 512
 
+/** Time in ms a client thread should wait for a mutex to become available **/
+#define IP_WAIT_FOR_MUTEX_AVAILABILITY 4
 
 /*
  * A field is the term I use for a variable that is stored in shared memory.
@@ -54,7 +56,6 @@ struct SharedData_t {
 	int maxNumFields; /* max number of fields in the shared data */
 	int usedFields;
 	struct field_t fields[ (IP_BUF_SIZE / sizeof(struct field_t)) - 1];
-	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
 };
 
 
@@ -64,7 +65,7 @@ struct SharedData_t {
 struct SharedMemory_t {
 	char name[IP_MAX_MEM_NAME_LENGTH];
 	int BufferSize;
-	char* ptrToMutex;
+	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
 	int ReadTimeDelay;
 	struct SharedData_t* sd;
 };
@@ -141,15 +142,61 @@ struct SharedData_t* createSharedData(){
  * This is to be run on the host process.
  */
 SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
-	SharedMemory_handle sm = (SharedMemory_handle) malloc(sizeof(struct SharedMemory_t));
-	if (sm != NULL){ /* if the object is valid */
-		strncpy(  sm->name, name, IP_MAX_MEM_NAME_LENGTH-1);
-		sm->name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
-		sm->BufferSize=IP_BUF_SIZE;
-		sm->ReadTimeDelay=7;
-		/* Create a Local Copy of the Shared Data Object */
-		struct SharedData_t* local_sd=createSharedData();
-	}
+	/* Create NULL local shared memory object **/
+	SharedMemory_handle sm =NULL;
+
+
+
+   HANDLE hMapFile;
+   LPCTSTR pBuf;
+
+   /** Create file mapping **/
+   hMapFile = CreateFileMapping(
+				 INVALID_HANDLE_VALUE,    // use paging file
+				 NULL,                    // default security
+				 PAGE_READWRITE,          // read/write access
+				 0,                       // maximum object size (high-order DWORD)
+				 IP_BUF_SIZE,                // maximum object size (low-order DWORD)
+				 name);                 // name of mapping object
+   if (hMapFile == NULL)
+   {
+	  _tprintf(TEXT("Could not create file mapping object (%d).\n"),
+			 GetLastError());
+	  return sm;
+   }
+
+
+   /* Create a buffer for the map opbject*/
+   pBuf = (LPTSTR) MapViewOfFile(hMapFile,   // handle to map object
+						FILE_MAP_ALL_ACCESS, // read/write permission
+						0,
+						0,
+						IP_BUF_SIZE);
+
+   if (pBuf == NULL)
+   {
+	  _tprintf(TEXT("Could not map view of file (%d).\n"),
+			 GetLastError());
+
+	   CloseHandle(hMapFile);
+
+	  return sm;
+   }
+
+
+
+
+	/* Create Local Shared Memory Object to Store Information */
+	sm= (SharedMemory_handle) malloc(sizeof(struct SharedMemory_t));
+
+	/* Initialize the Local Shared Memory Object */
+	strncpy(  sm->name, name, IP_MAX_MEM_NAME_LENGTH-1);
+	sm->name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
+	sm->BufferSize=IP_BUF_SIZE;
+	sm->ReadTimeDelay=7;
+
+			/* Create a Local Copy of the Shared Data Object */
+	struct SharedData_t* local_sd=createSharedData();
 
 	return sm;
 }
