@@ -295,11 +295,9 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 
 	/*Attain Mutex Lock */
 
-	printf("about to copy\n");
 	/* Copy the local copy of the Shared Data Object into Shared Memory */
     CopyMemory((PVOID)pBuf, &local_sd, sizeof(local_sd));
 
-    printf("copy completed\n");
 
     /* Update the Shared MEmory Obj to reflect that the local data is now in shared MEmory */
     sm->sd=(SharedData_t*) pBuf;
@@ -319,6 +317,59 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
  * This is to be run on the client process.
  */
 SharedMemory_handle ip_CreateSharedMemoryClient(char* name){
+	/* Create NULL local shared memory object **/
+	SharedMemory_handle sm =NULL;
+
+   HANDLE hMapFile;
+   LPCTSTR pBuf;
+
+   /** Create file mapping **/
+   hMapFile = OpenFileMapping(
+                   FILE_MAP_ALL_ACCESS,   // read/write access
+                   FALSE,                 // do not inherit the name
+                   name);               // name of mapping object
+
+   if (hMapFile == NULL)
+   {
+	  _tprintf(TEXT("Could not create file mapping object (%d).\n"),
+			 GetLastError());
+	  return sm;
+   }
+
+
+   /* Create a buffer for the map opbject*/
+   pBuf = (LPTSTR) MapViewOfFile(hMapFile,   // handle to map object
+						FILE_MAP_ALL_ACCESS, // read/write permission
+						0,
+						0,
+						IP_BUF_SIZE);
+
+   if (pBuf == NULL)
+   {
+	  _tprintf(TEXT("Could not map view of file (%d).\n"),
+			 GetLastError());
+
+	   CloseHandle(hMapFile);
+
+	  return sm;
+   }
+
+
+	/* Create Local Shared Memory Object to Store Information */
+	sm=createSharedMemoryObj(name,hMapFile,pBuf);
+
+
+	/* Create Mutex */
+
+	/*Attain Mutex Lock */
+
+
+	/* Check to see that Shared Data Struct is Valid */
+
+    /* Update the Shared MEmory Obj to reflect that shared data  is now in shared MEmory */
+    sm->sd=(SharedData_t*) pBuf;
+
+	return sm;
 
 }
 
@@ -445,7 +496,10 @@ int main(){
 	SharedMemory_handle mySharedMem = ip_CreateSharedMemoryHost("YourMama1");
 	printf("Created shared memory host!\n");
 
+
+	SharedMemory_handle mySharedMemClient = ip_CreateSharedMemoryHost("YourMama1");
 	ip_CloseSharedMemory(mySharedMem);
+	ip_CloseSharedMemory(mySharedMemClient);
 	printf("Destroyed Shared Memory!\n");
 	return IP_SUCCESS;
 }
