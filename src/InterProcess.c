@@ -120,9 +120,10 @@ struct SharedData_t* createSharedData();
  */
 int destroySharedData(SharedData_t* sd);
 
-
-
-
+/*
+ * Do a simple sanity check on the Shared Data Struct
+ */
+int verifySharedDataStruct(SharedData_t* sd);
 
 
 
@@ -223,6 +224,19 @@ int destroySharedData(SharedData_t* sd){
 	free(sd);
 	return IP_SUCCESS;
 }
+
+
+/*
+ * Do a simple sanity check on the Shared Data Struct
+ */
+int verifySharedDataStruct(SharedData_t* sd){
+  if (sd->maxNumFields >0){
+	  return IP_SUCCESS;
+  } else {
+	  return IP_ERROR;
+  }
+}
+
 
 /*********************************************************************************/
 /*********************************************************************************/
@@ -355,8 +369,7 @@ SharedMemory_handle ip_CreateSharedMemoryClient(char* name){
    }
 
 
-	/* Create Local Shared Memory Object to Store Information */
-	sm=createSharedMemoryObj(name,hMapFile,pBuf);
+
 
 
 	/* Create Mutex */
@@ -365,12 +378,19 @@ SharedMemory_handle ip_CreateSharedMemoryClient(char* name){
 
 
 	/* Check to see that Shared Data Struct is Valid */
+	if (verifySharedDataStruct((SharedData_t*) pBuf)== IP_SUCCESS){
 
-    /* Update the Shared MEmory Obj to reflect that shared data  is now in shared MEmory */
-    sm->sd=(SharedData_t*) pBuf;
+		/* Create Local Shared Memory Object to Store Information */
+		sm=createSharedMemoryObj(name,hMapFile,pBuf);
+		/* Update the Shared MEmory Obj to reflect that shared data  is now in shared MEmory */
+		sm->sd=(SharedData_t*) pBuf;
 
+	} else{
+		printf("Error. Shared Memory Map does not contain a valid shared data structure.\n");
+	}
+
+	/* if sm is null something went wrong */
 	return sm;
-
 }
 
 
@@ -497,7 +517,7 @@ int main(){
 	printf("Created shared memory host!\n");
 
 
-	SharedMemory_handle mySharedMemClient = ip_CreateSharedMemoryHost("YourMama1");
+	SharedMemory_handle mySharedMemClient = ip_CreateSharedMemoryClient("YourMama1");
 	ip_CloseSharedMemory(mySharedMem);
 	ip_CloseSharedMemory(mySharedMemClient);
 	printf("Destroyed Shared Memory!\n");
