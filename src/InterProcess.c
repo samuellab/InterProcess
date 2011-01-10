@@ -63,11 +63,19 @@ struct SharedData_t {
  * Local object that provides information about the shared memory.
  */
 struct SharedMemory_t {
+
+	/* Properties of the Shared Memory */
 	char name[IP_MAX_MEM_NAME_LENGTH];
 	int BufferSize;
 	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
 	int ReadTimeDelay;
-	struct SharedData_t* sd;
+
+	/* Application Level Data */
+	struct SharedData_t* sd; /* pointer to the location of the shared data  (eventually will be pBuf)*/
+
+	/* Windows Level File Mapping **/
+	HANDLE hMapFile; /* handle to mapped file of the shared memroy */
+	LPCTSTR pBuf; /* pointer to location of shared memory */
 };
 
 
@@ -88,12 +96,43 @@ int zeroField(struct field_t* field){
 }
 
 
+
+
 /*************
  *
  * Create and Destroy Shared Data
  *
  */
 
+/*
+ * Create Shared Memory Object
+ *
+ */
+SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR pBuf){
+	/* Create Local Shared Memory Object to Store Information */
+	SharedMemory_handle sm= (SharedMemory_handle) malloc(sizeof(struct SharedMemory_t));
+
+	/* Initialize the Local Shared Memory Object */
+	strncpy(  sm->name, name, IP_MAX_MEM_NAME_LENGTH-1);
+	sm->name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
+	sm->BufferSize=IP_BUF_SIZE;
+	sm->ReadTimeDelay=7;
+	sm->pBuf=pBuf;
+	sm->hMapFile=hMapFile;
+	return sm;
+}
+
+/*
+ * Destroy Shared memory and deallocate memory
+ */
+int destroySharedMemoryObj(SharedMemory_handle sm){
+	sm->name[0]='\0';
+	if(sm->pBuf!=NULL) UnmapViewOfFile((PVOID) sm->pBuf);
+	if(sm->hMapFile!=NULL) CloseHandle(sm->hMapFile);
+	free(sm);
+	sm=NULL;
+	return IP_SUCCESS;
+}
 
 /*
  * Create Shared Data.
@@ -145,8 +184,6 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 	/* Create NULL local shared memory object **/
 	SharedMemory_handle sm =NULL;
 
-
-
    HANDLE hMapFile;
    LPCTSTR pBuf;
 
@@ -184,18 +221,11 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
    }
 
 
-
-
 	/* Create Local Shared Memory Object to Store Information */
+	sm=createSharedMemoryObj(name,hMapFile,pBuf);
 	sm= (SharedMemory_handle) malloc(sizeof(struct SharedMemory_t));
 
-	/* Initialize the Local Shared Memory Object */
-	strncpy(  sm->name, name, IP_MAX_MEM_NAME_LENGTH-1);
-	sm->name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
-	sm->BufferSize=IP_BUF_SIZE;
-	sm->ReadTimeDelay=7;
-
-			/* Create a Local Copy of the Shared Data Object */
+	/* Create a Local Copy of the Shared Data Object */
 	struct SharedData_t* local_sd=createSharedData();
 
 	return sm;
@@ -220,6 +250,8 @@ SharedMemory_handle ip_CreateSharedMemoryClient(char* name){
  *  Returns -1 if error (IP_ERROR).
  */
 int ip_CloseSharedMemory(SharedMemory_handle sm){
+
+	return destroySharedMemoryObj(sm);
 
 }
 
@@ -333,6 +365,9 @@ int main(){
 	// struct SharedData_t* sd= createSharedData();
 	SharedMemory_handle mySharedMem = ip_CreateSharedMemoryHost("YourMama");
 	printf("Created shared memory host!\n");
+
+	ip_CloseSharedMemory(mySharedMem);
+	printf("Destroyed Shared Memory!\n");
 	return IP_SUCCESS;
 }
 
