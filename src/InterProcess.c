@@ -37,19 +37,19 @@
 
 #define IP_MAX_MEM_NAME_LENGTH 512
 
-struct SharedMemory_t {
-	char name[IP_MAX_MEM_NAME_LENGTH];
-	int BufferSize;
-	char* ptrToMutex;
-	int ReadTimeDelay;
-};
 
+/*
+ * A field is the term I use for a variable that is stored in shared memory.
+ */
 struct field_t {
 	char name[IP_FIELD_NAME_SIZE];
 	char data[IP_FIELD_DATA_CONTAINER_SIZE];
 	int size; /* Size of data container used for data*/
 };
 
+/*
+ * Shared data type that will ultimately be stored in shared memory
+ */
 struct SharedData_t {
 	int maxNumFields; /* max number of fields in the shared data */
 	int usedFields;
@@ -57,6 +57,17 @@ struct SharedData_t {
 	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
 };
 
+
+/*
+ * Local object that provides information about the shared memory.
+ */
+struct SharedMemory_t {
+	char name[IP_MAX_MEM_NAME_LENGTH];
+	int BufferSize;
+	char* ptrToMutex;
+	int ReadTimeDelay;
+	struct SharedData_t* sd;
+};
 
 
 
@@ -109,6 +120,12 @@ struct SharedData_t* createSharedData(){
 
 }
 
+/*********************************************************************************/
+/*********************************************************************************/
+/* 			P U B L I C        F U N C T I O N S                                 */
+/*********************************************************************************/
+/*********************************************************************************/
+
 
 
 /*************
@@ -130,6 +147,8 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 		sm->name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
 		sm->BufferSize=IP_BUF_SIZE;
 		sm->ReadTimeDelay=7;
+		/* Create a Local Copy of the Shared Data Object */
+		struct SharedData_t* local_sd=createSharedData();
 	}
 
 	return sm;
@@ -264,8 +283,9 @@ int ip_ClearField(SharedMemory_handle sm, char fieldName){
 
 int main(){
 	printf("Welcome!\n");
-	struct SharedData_t* sd= createSharedData();
-	printf("Created shared data type!\n");
+	// struct SharedData_t* sd= createSharedData();
+	SharedMemory_handle mySharedMem = ip_CreateSharedMemoryHost("YourMama");
+	printf("Created shared memory host!\n");
 	return IP_SUCCESS;
 }
 
