@@ -164,13 +164,16 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR p
 
 /*
  * Destroy Shared memory and deallocate memory
+ *
+ * WARNING. This may destroy all data in shared memory.
  */
 int destroySharedMemoryObj(SharedMemory_handle sm){
 	if (sm!=NULL){
 		sm->name[0]='\0';
+		/*Close out the shared memory file */
 		if(sm->pBuf!=NULL) UnmapViewOfFile((PVOID) sm->pBuf);
 		if(sm->hMapFile!=NULL) CloseHandle(sm->hMapFile);
-		if(sm->sd!=NULL) destroySharedData(sm->sd);
+
 		free(sm);
 		sm=NULL;
 	}
@@ -288,7 +291,21 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 	/* Create a Local Copy of the Shared Data Object */
 	struct SharedData_t* local_sd=createSharedData();
 
+	/* Create Mutex */
+
+	/*Attain Mutex Lock */
+
+	printf("about to copy\n");
 	/* Copy the local copy of the Shared Data Object into Shared Memory */
+    CopyMemory((PVOID)pBuf, &local_sd, sizeof(local_sd));
+
+    printf("copy completed\n");
+
+    /* Update the Shared MEmory Obj to reflect that the local data is now in shared MEmory */
+    sm->sd=(SharedData_t*) pBuf;
+
+    /*Destroy the local copy of the Shared Data object */
+    destroySharedData(local_sd);
 
 	return sm;
 }
