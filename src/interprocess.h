@@ -127,6 +127,38 @@ int ip_GetSharedMemorySize(SharedMemory_handle sm);
 int ip_GetSharedMemoryStatus(SharedMemory_handle sm);
 
 
+/*
+ * Return the number of milliseconds of the Read Time Delay.
+ *
+ * Both reading or writing a value locks the shared memory. By default, when a client
+ * successfully reads a value from shared memory, the client is forced to sleep for a specified time
+ * (default is 7ms). I call this the Read Time Delay.
+ *
+ * The Read Time Delay gives another process time to access the shared memory, and prevents an overly
+ * aggressive client from reading in a loop and hogging the lock.
+ *
+ * Note.. this implicitly prioritizes writing over reading.
+ *
+ * To turn off the Read Time Delay, set the time to zero.
+ */
+int ip_GetSharedMemoryReadTimeDelay(SharedMemory_handle sm);
+
+/*
+ * Set the number of milliseconds of the Read Time Delay.
+ *
+ * Both reading or writing a value locks the shared memory. By default, when a client
+ * successfully reads a value from shared memory, the client is forced to sleep for a specified time
+ * (default is 7ms). I call this the Read Time Delay.
+ *
+ * The Read Time Delay gives another process time to access the shared memory, and prevents an overly
+ * aggressive client from reading in a loop and hogging the lock.
+ *
+ * Note.. this implicitly prioritizes writing over reading.
+ *
+ * To turn off the Read Time Delay, set the time to zero.
+ */
+int ip_SetSharedMemoryReadTimeDelay(SharedMemory_handle sm, int time_ms);
+
 /*********************
  *
  *  Read/Write Memory
