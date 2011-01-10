@@ -41,20 +41,39 @@ struct SharedMemory_t {
 	char name[IP_MAX_MEM_NAME_LENGTH];
 	int BufferSize;
 	char* ptrToMutex;
+	int ReadTimeDelay;
 };
 
 struct field_t {
 	char name[IP_FIELD_NAME_SIZE];
-	char* data[IP_FIELD_DATA_CONTAINER_SIZE];
+	char data[IP_FIELD_DATA_CONTAINER_SIZE];
 	int size; /* Size of data container used for data*/
 };
 
 struct SharedData_t {
-	int numFields; /* number of fields in the shared data */
+	int maxNumFields; /* max number of fields in the shared data */
+	int usedFields;
 	struct field_t fields[ (IP_BUF_SIZE / sizeof(struct field_t)) - 1];
 	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
 };
 
+
+
+
+/*********************************************************************************/
+/*********************************************************************************/
+/* 			P R I V A T E      F U N C T I O N S                                 */
+/*********************************************************************************/
+/*********************************************************************************/
+
+/*
+ * Zero a field
+ */
+int zeroField(struct field_t* field){
+	memset( field->name, '\0', sizeof(char) * IP_FIELD_NAME_SIZE );
+	memset( field->data, '\0', sizeof(char) * IP_FIELD_DATA_CONTAINER_SIZE );
+	return IP_SUCCESS;
+}
 
 
 /*************
@@ -63,12 +82,25 @@ struct SharedData_t {
  *
  */
 
-struct SharedData_t createSharedData(){
-	struct SharedData_t sdata= malloc(sizeof(struct SharedData_t));
+
+/*
+ * Create Shared Data.
+ * This returns a pointer to a chunk of data that is to be stored in shared memory.
+ */
+struct SharedData_t* createSharedData(){
+	struct SharedData_t* sdata= (struct SharedData_t*) malloc(sizeof(struct SharedData_t));
 	if (sdata != NULL){
-		sdata.numFields=0;
+		sdata->usedFields=0;
+		sdata->maxNumFields= (IP_BUF_SIZE / sizeof(struct field_t)) - 1;
 
 		/** Blank out the data with zeros **/
+		int k=0;
+		for (k = 0; k < sdata->maxNumFields; ++k) {
+			/* clear field */
+			zeroField( &(sdata->fields[k]) ) ;
+		}
+
+
 		/** Create the mutex **/
 
 
@@ -92,11 +124,12 @@ struct SharedData_t createSharedData(){
  * This is to be run on the host process.
  */
 SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
-	SharedMemory_handle sm = malloc(sizeof(struct SharedMemory_t));
+	SharedMemory_handle sm = (SharedMemory_handle) malloc(sizeof(struct SharedMemory_t));
 	if (sm != NULL){ /* if the object is valid */
-		strncpy( sm.name, name, IP_MAX_MEM_NAME_LENGTH-1);
-		sm.name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
-		sm.BufferSize=IP_BUF_SIZE;
+		strncpy(  sm->name, name, IP_MAX_MEM_NAME_LENGTH-1);
+		sm->name[IP_MAX_MEM_NAME_LENGTH-1]='\0';
+		sm->BufferSize=IP_BUF_SIZE;
+		sm->ReadTimeDelay=7;
 	}
 
 	return sm;
@@ -110,7 +143,9 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
  * Start the shared memory client and create a shared memory object.
  * This is to be run on the client process.
  */
-SharedMemory_handle ip_CreateSharedMemoryClient(char* name);
+SharedMemory_handle ip_CreateSharedMemoryClient(char* name){
+
+}
 
 
 /*
@@ -118,7 +153,9 @@ SharedMemory_handle ip_CreateSharedMemoryClient(char* name);
  *  Returns 0 if success (IP_SUCCESS).
  *  Returns -1 if error (IP_ERROR).
  */
-int ip_CloseSharedMemory(SharedMemory_handle sm);
+int ip_CloseSharedMemory(SharedMemory_handle sm){
+
+}
 
 
 /*********************
@@ -131,13 +168,17 @@ int ip_CloseSharedMemory(SharedMemory_handle sm);
 /*
  * Get the name of the shared memory. This name is used as the unique identifier.
  */
-char* ip_GetSharedMemoryName(SharedMemory_handle sm);
+char* ip_GetSharedMemoryName(SharedMemory_handle sm){
+
+}
 
 /*
  * Get the size of the shared memory.
  *
  */
-int ip_GetSharedMemorySize(SharedMemory_handle sm);
+int ip_GetSharedMemorySize(SharedMemory_handle sm){
+
+}
 
 
 /*
@@ -150,7 +191,9 @@ int ip_GetSharedMemorySize(SharedMemory_handle sm);
  * Returns -2 (IP_DOESNOTEXIST) if shared memory does not exist
  *
  */
-int ip_GetSharedMemoryStatus(SharedMemory_handle sm);
+int ip_GetSharedMemoryStatus(SharedMemory_handle sm){
+
+}
 
 
 /*********************
@@ -173,7 +216,9 @@ int ip_GetSharedMemoryStatus(SharedMemory_handle sm);
  *  IP_BUSY 1
  *
  */
-int ip_WriteValue(SharedMemory_handle sm, char fieldName[16], void *data, int dataSize);
+int ip_WriteValue(SharedMemory_handle sm, char fieldName, void *data, int dataSize){
+
+}
 
 
 /*
@@ -186,7 +231,9 @@ int ip_WriteValue(SharedMemory_handle sm, char fieldName[16], void *data, int da
  *  IP_DOES_NOT_EXIST -2
  *
  */
-int ip_ReadValue(SharedMemory_handle sm, char fieldName[16], void *data, int dataSize);
+int ip_ReadValue(SharedMemory_handle sm, char fieldName, void *data, int dataSize){
+
+}
 
 
 
@@ -198,7 +245,9 @@ int ip_ReadValue(SharedMemory_handle sm, char fieldName[16], void *data, int dat
  *  IP_BUSY 1
  *
  */
-int ip_ClearAllFields(SharedMemory_handle sm);
+int ip_ClearAllFields(SharedMemory_handle sm){
+
+}
 
 /*
  *  Clear a single field in shared memory
@@ -208,5 +257,16 @@ int ip_ClearAllFields(SharedMemory_handle sm);
  *  IP_BUSY 1
  *
  */
-int ip_ClearField(SharedMemory_handle sm, char fieldName);
+int ip_ClearField(SharedMemory_handle sm, char fieldName){
+
+}
+
+
+int main(){
+	printf("Welcome!\n");
+	struct SharedData_t* sd= createSharedData();
+	printf("Created shared data type!\n");
+	return IP_SUCCESS;
+}
+
 

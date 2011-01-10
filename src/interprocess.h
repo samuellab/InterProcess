@@ -179,7 +179,7 @@ int ip_SetSharedMemoryReadTimeDelay(SharedMemory_handle sm, int time_ms);
  *  IP_BUSY 1
  *
  */
-int ip_WriteValue(SharedMemory_handle sm, char fieldName[16], void *data, int dataSize);
+int ip_WriteValue(SharedMemory_handle sm, char* fieldName, void *data, int dataSize);
 
 
 /*
@@ -192,7 +192,7 @@ int ip_WriteValue(SharedMemory_handle sm, char fieldName[16], void *data, int da
  *  IP_DOES_NOT_EXIST -2
  *
  */
-int ip_ReadValue(SharedMemory_handle sm, char fieldName[16], void *data, int dataSize);
+int ip_ReadValue(SharedMemory_handle sm, char* fieldName, void *data, int dataSize);
 
 
 
@@ -214,7 +214,7 @@ int ip_ClearAllFields(SharedMemory_handle sm);
  *  IP_BUSY 1
  *
  */
-int ip_ClearField(SharedMemory_handle sm, char fieldName);
+int ip_ClearField(SharedMemory_handle sm, char* fieldName);
 
 
 
