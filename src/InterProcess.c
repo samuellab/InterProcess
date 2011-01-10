@@ -86,6 +86,46 @@ struct SharedMemory_t {
 /*********************************************************************************/
 /*********************************************************************************/
 
+
+/*
+ * Destroy Shared memory and deallocate memory
+ */
+int destroySharedMemoryObj(SharedMemory_handle sm);
+
+/*
+ * Zero a field
+ */
+int zeroField(struct field_t* field);
+
+
+/*
+ * Create Shared Memory Object
+ *
+ */
+SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR pBuf);
+
+/*
+ * Destroy Shared memory obj and deallocate memory
+ */
+int destroySharedMemoryObj(SharedMemory_handle sm);
+
+/*
+ * Create Shared Data chunk.
+ * This returns a pointer to a chunk of data that is to be stored in shared memory.
+ */
+struct SharedData_t* createSharedData();
+
+/*
+ * destroy Shared Data chunkc
+ */
+int destroySharedData(SharedData_t* sd);
+
+
+
+
+
+
+
 /*
  * Zero a field
  */
@@ -94,7 +134,6 @@ int zeroField(struct field_t* field){
 	memset( field->data, '\0', sizeof(char) * IP_FIELD_DATA_CONTAINER_SIZE );
 	return IP_SUCCESS;
 }
-
 
 
 
@@ -119,6 +158,7 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR p
 	sm->ReadTimeDelay=7;
 	sm->pBuf=pBuf;
 	sm->hMapFile=hMapFile;
+	sm->sd=NULL;
 	return sm;
 }
 
@@ -126,16 +166,19 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR p
  * Destroy Shared memory and deallocate memory
  */
 int destroySharedMemoryObj(SharedMemory_handle sm){
-	sm->name[0]='\0';
-	if(sm->pBuf!=NULL) UnmapViewOfFile((PVOID) sm->pBuf);
-	if(sm->hMapFile!=NULL) CloseHandle(sm->hMapFile);
-	free(sm);
-	sm=NULL;
+	if (sm!=NULL){
+		sm->name[0]='\0';
+		if(sm->pBuf!=NULL) UnmapViewOfFile((PVOID) sm->pBuf);
+		if(sm->hMapFile!=NULL) CloseHandle(sm->hMapFile);
+		if(sm->sd!=NULL) destroySharedData(sm->sd);
+		free(sm);
+		sm=NULL;
+	}
 	return IP_SUCCESS;
 }
 
 /*
- * Create Shared Data.
+ * Create Shared Data chunk.
  * This returns a pointer to a chunk of data that is to be stored in shared memory.
  */
 struct SharedData_t* createSharedData(){
@@ -158,6 +201,24 @@ struct SharedData_t* createSharedData(){
 	}
 	return sdata;
 
+}
+/*
+ * destroy Shared Data chunk
+ */
+int destroySharedData(SharedData_t* sd){
+	if (sd!=NULL){
+		/** Blank out the fields with zeros **/
+		sd->usedFields=0;
+		int k=0;
+		for (k = 0; k < sd->maxNumFields; ++k) {
+			/* clear field */
+			zeroField( &(sd->fields[k]) ) ;
+		}
+
+
+	}
+	free(sd);
+	return IP_SUCCESS;
 }
 
 /*********************************************************************************/
@@ -223,10 +284,11 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 
 	/* Create Local Shared Memory Object to Store Information */
 	sm=createSharedMemoryObj(name,hMapFile,pBuf);
-	sm= (SharedMemory_handle) malloc(sizeof(struct SharedMemory_t));
 
 	/* Create a Local Copy of the Shared Data Object */
 	struct SharedData_t* local_sd=createSharedData();
+
+	/* Copy the local copy of the Shared Data Object into Shared Memory */
 
 	return sm;
 }
@@ -363,7 +425,7 @@ int ip_ClearField(SharedMemory_handle sm, char fieldName){
 int main(){
 	printf("Welcome!\n");
 	// struct SharedData_t* sd= createSharedData();
-	SharedMemory_handle mySharedMem = ip_CreateSharedMemoryHost("YourMama");
+	SharedMemory_handle mySharedMem = ip_CreateSharedMemoryHost("YourMama1");
 	printf("Created shared memory host!\n");
 
 	ip_CloseSharedMemory(mySharedMem);
