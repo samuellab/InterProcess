@@ -509,19 +509,3 @@ int ip_ClearField(SharedMemory_handle sm, char fieldName){
 
 }
 
-
-int main(){
-	printf("Welcome!\n");
-	// struct SharedData_t* sd= createSharedData();
-	SharedMemory_handle mySharedMem = ip_CreateSharedMemoryHost("YourMama1");
-	printf("Created shared memory host!\n");
-
-
-	SharedMemory_handle mySharedMemClient = ip_CreateSharedMemoryClient("YourMama1");
-	ip_CloseSharedMemory(mySharedMem);
-	ip_CloseSharedMemory(mySharedMemClient);
-	printf("Destroyed Shared Memory!\n");
-	return IP_SUCCESS;
-}
-
-
