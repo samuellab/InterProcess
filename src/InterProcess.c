@@ -555,6 +555,14 @@ int ip_GetSharedMemoryStatus(SharedMemory_handle sm){
 
 }
 
+int ip_SetSharedMemoryLockWaitTime(SharedMemory_handle sm, int time_ms){
+
+}
+
+int ip_GetSharedMemoryLockWaitTime(SharedMemory_handle sm, int time_ms){
+
+}
+
 
 /*********************
  *
