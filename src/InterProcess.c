@@ -326,15 +326,48 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 	/* Create Local Shared Memory Object to Store Information */
 	sm=createSharedMemoryObj(name,hMapFile,pBuf);
 
-	/* Create a Local Copy of the Shared Data Object */
+	/* Create a Local Copy of the Shared Data Object (and mutex)*/
 	struct SharedData_t* local_sd=createSharedData();
 
-	/* Create Mutex */
+	/*Try to Attain Mutex Lock */
 
-	/*Attain Mutex Lock */
 
-	/* Copy the local copy of the Shared Data Object into Shared Memory */
-    CopyMemory((PVOID)pBuf, &local_sd, sizeof(local_sd));
+
+	    // Request ownership of mutex.
+		DWORD dwWaitResult;
+
+	        dwWaitResult = WaitForSingleObject(
+	            sm->ghMutex,    // handle to mutex
+	            INFINITE);  // no time-out interval
+
+	        switch (dwWaitResult)
+	        {
+	            // The thread got ownership of the mutex
+	            case WAIT_OBJECT_0:
+
+					/* We've received lock.. perform an action **/
+	            	/* Copy the local copy of the Shared Data Object into Shared Memory */
+	                CopyMemory((PVOID)pBuf, &local_sd, sizeof(local_sd));
+
+
+
+					// Release ownership of the mutex object
+					if (! ReleaseMutex(sm->ghMutex))
+					{
+						printf("ERROR: Unable to release mutex\n");
+					}
+
+	                break;
+
+	            // The thread got ownership of an abandoned mutex
+	            case WAIT_ABANDONED:
+	                printf("The mutex appears to be abandoned! Sad\n");
+	                /*Destroy the local copy of the Shared Data object */
+	                destroySharedData(local_sd);
+	                return NULL;
+	        }
+
+
 
 
     /* Update the Shared MEmory Obj to reflect that the local data is now in shared MEmory */
