@@ -68,7 +68,6 @@ struct SharedMemory_t {
 	/* Properties of the Shared Memory */
 	char name[IP_MAX_MEM_NAME_LENGTH];
 	int BufferSize;
-	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
 	int ReadTimeDelay;
 
 	/* Application Level Data */
@@ -77,6 +76,11 @@ struct SharedMemory_t {
 	/* Windows Level File Mapping **/
 	HANDLE hMapFile; /* handle to mapped file of the shared memroy */
 	LPCTSTR pBuf; /* pointer to location of shared memory */
+
+	/* Mutex Locking Properties */
+	HANDLE ghMutex; /*  mutex  indicates who has a lock on the data */
+	DWORD lockWaitTime; /* number of ms to wait for lock */
+
 };
 
 
@@ -87,6 +91,23 @@ struct SharedMemory_t {
 /*********************************************************************************/
 /*********************************************************************************/
 
+/*
+ *  Tries to acquire a lock by waiting until the mutex is released.
+ *  The function will wait the amount of time specified in the SharedMemory object
+ *  (the default is 4ms).
+ *
+ *  This function returns
+ *  0 IP_SUCCESS
+ *  1 IP_BUSY
+ *
+ *  Don't forget to call ReleaseLock()
+ */
+int AcquireLock(SharedMemory_handle sm);
+
+/*
+ * Tries to release the mutex. Returns IP_ERROR or IP_SUCCESS;
+ */
+int ReleaseLock(SharedMemory_handle sm);
 
 /*
  * Destroy Shared memory and deallocate memory
@@ -139,11 +160,6 @@ int zeroField(struct field_t* field){
 
 
 
-/*************
- *
- * Create and Destroy Shared Data
- *
- */
 
 /*
  * Create Shared Memory Object
@@ -165,6 +181,7 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR p
 	/** Create Mutex for Shared Memory **/
     // Create a mutex with no initial owner
 	sm->ghMutex=NULL;
+	sm->lockWaitTime=4;
 
 	/* give the mutex the same name as the memory object but with the prefix "mutex_" */
 	char mutex_name[IP_MAX_MEM_NAME_LENGTH+5];
@@ -204,6 +221,14 @@ int destroySharedMemoryObj(SharedMemory_handle sm){
 	}
 	return IP_SUCCESS;
 }
+
+
+
+/*************
+ *
+ * Create and Destroy Shared Data
+ *
+ */
 
 /*
  * Create Shared Data chunk.
@@ -259,6 +284,61 @@ int verifySharedDataStruct(SharedData_t* sd){
   } else {
 	  return IP_ERROR;
   }
+}
+
+/********************
+ *
+ * Get Lock
+ *
+ */
+
+/*
+ *  Tries to acquire a lock by waiting until the mutex is released.
+ *  The function will wait the amount of time specified in the SharedMemory object
+ *  (the default is 4ms).
+ *
+ *  This function returns
+ *  0 IP_SUCCESS
+ *  1 IP_BUSY
+ *
+ *  Don't forget to call ReleaseLock()
+ */
+int AcquireLock(SharedMemory_handle sm){
+	/*Try to Attain Mutex Lock */
+
+	// Request ownership of mutex.
+	DWORD dwWaitResult;
+
+    dwWaitResult = WaitForSingleObject(
+    		sm->ghMutex,    // handle to mutex
+    		sm->ReadTimeDelay);  // no time-out interval
+
+		        switch (dwWaitResult)
+		        {
+		            // The thread got ownership of the mutex
+		            case WAIT_OBJECT_0:
+		            	return IP_SUCCESS;
+
+		            // The thread got ownership of an abandoned mutex
+		            case WAIT_ABANDONED:
+
+		                return IP_BUSY;
+		        }
+}
+
+/*
+ * Tries to release the mutex. Returns IP_ERROR or IP_SUCCESS;
+ */
+int ReleaseLock(SharedMemory_handle sm){
+	// Release ownership of the mutex object
+	if (! ReleaseMutex(sm->ghMutex))
+	{
+		printf("ERROR: Unable to release mutex\n");
+		return IP_ERROR;
+	} else {
+		return IP_SUCCESS;
+	}
+
 }
 
 
@@ -331,8 +411,6 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 
 	/*Try to Attain Mutex Lock */
 
-
-
 	    // Request ownership of mutex.
 		DWORD dwWaitResult;
 
@@ -349,14 +427,11 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 	            	/* Copy the local copy of the Shared Data Object into Shared Memory */
 	                CopyMemory((PVOID)pBuf, &local_sd, sizeof(local_sd));
 
-
-
 					// Release ownership of the mutex object
 					if (! ReleaseMutex(sm->ghMutex))
 					{
 						printf("ERROR: Unable to release mutex\n");
 					}
-
 	                break;
 
 	            // The thread got ownership of an abandoned mutex
@@ -366,8 +441,6 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 	                destroySharedData(local_sd);
 	                return NULL;
 	        }
-
-
 
 
     /* Update the Shared MEmory Obj to reflect that the local data is now in shared MEmory */
