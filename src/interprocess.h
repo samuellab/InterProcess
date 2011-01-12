@@ -218,5 +218,28 @@ int ip_ClearField(SharedMemory_handle sm, char* fieldName);
 
 
 
+/**************************************************************/
+/**************************************************************/
+/** PRIVATE FUNCTIONS!! DONT FORGET TO DELETE THESE.. FOR DEVEL ONLY **/
+/**************************************************************/
+/**************************************************************/
+/*
+ *  Tries to acquire a lock by waiting until the mutex is released.
+ *  The function will wait the amount of time specified in the SharedMemory object
+ *  (the default is 4ms).
+ *
+ *  This function returns
+ *  0 IP_SUCCESS
+ *  1 IP_BUSY
+ *
+ *  Don't forget to call ReleaseLock()
+ */
+int AcquireLock(SharedMemory_handle sm);
+
+/*
+ * Tries to release the mutex. Returns IP_ERROR or IP_SUCCESS;
+ */
+int ReleaseLock(SharedMemory_handle sm)	;
+
 #endif /* INTERPROCESS_H_ */
 

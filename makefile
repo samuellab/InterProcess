@@ -35,7 +35,7 @@ $(targetdir)/interprocess.o: $(srcdir)/interprocess.h $(srcdir)/interprocess.c
 .PHONY: run
 run:
 	start $(targetdir)/host.exe 
-	start $(targetdir)/client.exe
+	$(targetdir)/client.exe
 	
 	
 .PHONY: clean

@@ -107,7 +107,7 @@ int AcquireLock(SharedMemory_handle sm);
 /*
  * Tries to release the mutex. Returns IP_ERROR or IP_SUCCESS;
  */
-int ReleaseLock(SharedMemory_handle sm);
+int ReleaseLock(SharedMemory_handle sm)	;
 
 /*
  * Destroy Shared memory and deallocate memory
@@ -192,12 +192,11 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR p
     sm->ghMutex = CreateMutex(
         NULL,              // default security attributes
         FALSE,             // initially not owned
-        mutex_name);             // unnamed mutex
+        mutex_name);             //mutex
 
     if (sm->ghMutex == NULL)
     {
         printf("CreateMutex error: %d\n", GetLastError());
-        printf("blah\n");
     }
 
 
@@ -305,14 +304,15 @@ int verifySharedDataStruct(SharedData_t* sd){
  */
 int AcquireLock(SharedMemory_handle sm){
 	/*Try to Attain Mutex Lock */
+	if(sm->ghMutex==NULL){
+		printf("DUDE! sm->ghMutex is null!\n");
 
+	}
 	// Request ownership of mutex.
 	DWORD dwWaitResult;
-
     dwWaitResult = WaitForSingleObject(
     		sm->ghMutex,    // handle to mutex
-    		sm->ReadTimeDelay);  // no time-out interval
-
+    		sm->lockWaitTime);  // no time-out interval
 		        switch (dwWaitResult)
 		        {
 		            // The thread got ownership of the mutex
@@ -410,45 +410,23 @@ SharedMemory_handle ip_CreateSharedMemoryHost(char* name){
 	struct SharedData_t* local_sd=createSharedData();
 
 	/*Try to Attain Mutex Lock */
+	if (AcquireLock(sm)==IP_SUCCESS){
+    	/* Copy the local copy of the Shared Data Object into Shared Memory */
+        CopyMemory((PVOID)pBuf, &local_sd, sizeof(local_sd));
+		// Release ownership of the mutex object
+		ReleaseLock(sm);
 
-	    // Request ownership of mutex.
-		DWORD dwWaitResult;
+	    /* Update the Shared MEmory Obj to reflect that the local data is now in shared MEmory */
+	    sm->sd=(SharedData_t*) pBuf;
 
-	        dwWaitResult = WaitForSingleObject(
-	            sm->ghMutex,    // handle to mutex
-	            INFINITE);  // no time-out interval
+	} else{
+		printf("The mutex appears to be busy!. Sad. \n");
+		sm=NULL;
+	}
 
-	        switch (dwWaitResult)
-	        {
-	            // The thread got ownership of the mutex
-	            case WAIT_OBJECT_0:
-
-					/* We've received lock.. perform an action **/
-	            	/* Copy the local copy of the Shared Data Object into Shared Memory */
-	                CopyMemory((PVOID)pBuf, &local_sd, sizeof(local_sd));
-
-					// Release ownership of the mutex object
-					if (! ReleaseMutex(sm->ghMutex))
-					{
-						printf("ERROR: Unable to release mutex\n");
-					}
-	                break;
-
-	            // The thread got ownership of an abandoned mutex
-	            case WAIT_ABANDONED:
-	                printf("The mutex appears to be abandoned! Sad\n");
-	                /*Destroy the local copy of the Shared Data object */
-	                destroySharedData(local_sd);
-	                return NULL;
-	        }
-
-
-    /* Update the Shared MEmory Obj to reflect that the local data is now in shared MEmory */
-    sm->sd=(SharedData_t*) pBuf;
 
     /*Destroy the local copy of the Shared Data object */
     destroySharedData(local_sd);
-
 	return sm;
 }
 
@@ -498,26 +476,30 @@ SharedMemory_handle ip_CreateSharedMemoryClient(char* name){
 	  return sm;
    }
 
+	/* Create Local Shared Memory Object to Store Information */
+	sm=createSharedMemoryObj(name,hMapFile,pBuf);
+	/* Update the Shared MEmory Obj to reflect that shared data  is now in shared MEmory */
+	sm->sd=(SharedData_t*) pBuf;
 
-
-
-
-	/* Create Mutex */
 
 	/*Attain Mutex Lock */
+    if (AcquireLock(sm)==IP_SUCCESS){
 
-
-	/* Check to see that Shared Data Struct is Valid */
-	if (verifySharedDataStruct((SharedData_t*) pBuf)== IP_SUCCESS){
-
-		/* Create Local Shared Memory Object to Store Information */
-		sm=createSharedMemoryObj(name,hMapFile,pBuf);
-		/* Update the Shared MEmory Obj to reflect that shared data  is now in shared MEmory */
-		sm->sd=(SharedData_t*) pBuf;
-
-	} else{
-		printf("Error. Shared Memory Map does not contain a valid shared data structure.\n");
-	}
+		/* Check to see that Shared Data Struct is Valid */
+		if (verifySharedDataStruct((SharedData_t*) pBuf)== IP_SUCCESS){
+			printf("SUCCESS: Shared data structure verified!");
+		}
+		else
+		{
+			printf("ERROR: The Shared Data Struct is not valid!\n");
+			return NULL;
+		}
+		ReleaseLock(sm);
+    }else {
+    	printf("Shared memory busy.\nUnable to attain lock to verify the shared data structs.\n");
+    	destroySharedMemoryObj(sm);
+    	sm=NULL;
+    }
 
 	/* if sm is null something went wrong */
 	return sm;
