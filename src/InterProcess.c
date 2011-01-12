@@ -31,6 +31,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <tchar.h>
+#include <string.h>
 
 #include "interprocess.h"
 
@@ -160,6 +161,29 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR p
 	sm->pBuf=pBuf;
 	sm->hMapFile=hMapFile;
 	sm->sd=NULL;
+
+	/** Create Mutex for Shared Memory **/
+    // Create a mutex with no initial owner
+	sm->ghMutex=NULL;
+
+	/* give the mutex the same name as the memory object but with the prefix "mutex_" */
+	char mutex_name[IP_MAX_MEM_NAME_LENGTH+5];
+	strcpy(mutex_name,"mutex_");
+	strncat(mutex_name,name,IP_MAX_MEM_NAME_LENGTH-1);
+	mutex_name[IP_MAX_MEM_NAME_LENGTH+5-1]='\0';
+
+    sm->ghMutex = CreateMutex(
+        NULL,              // default security attributes
+        FALSE,             // initially not owned
+        mutex_name);             // unnamed mutex
+
+    if (sm->ghMutex == NULL)
+    {
+        printf("CreateMutex error: %d\n", GetLastError());
+        printf("blah\n");
+    }
+
+
 	return sm;
 }
 
@@ -174,7 +198,7 @@ int destroySharedMemoryObj(SharedMemory_handle sm){
 		/*Close out the shared memory file */
 		if(sm->pBuf!=NULL) UnmapViewOfFile((PVOID) sm->pBuf);
 		if(sm->hMapFile!=NULL) CloseHandle(sm->hMapFile);
-
+		if(sm->ghMutex!=NULL) CloseHandle(sm->ghMutex);
 		free(sm);
 		sm=NULL;
 	}
