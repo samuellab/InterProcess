@@ -84,13 +84,6 @@ struct SharedMemory_t {
 };
 
 
-
-/*********************************************************************************/
-/*********************************************************************************/
-/* 			P R I V A T E      F U N C T I O N S                                 */
-/*********************************************************************************/
-/*********************************************************************************/
-
 /*
  *  Tries to acquire a lock by waiting until the mutex is released.
  *  The function will wait the amount of time specified in the SharedMemory object
@@ -150,6 +143,25 @@ int verifySharedDataStruct(SharedData_t* sd);
 
 
 /*
+ * Create field
+ * (uses malloc() to allocate memory for field..
+ * Don't forget to call destroyField()
+ *
+ * Returns NULL if there is an error.
+ */
+struct  field_t* createField(char* name);
+
+
+/*********************************************************************************/
+/*********************************************************************************/
+/* 			P R I V A T E      F U N C T I O N S                                 */
+/*********************************************************************************/
+/*********************************************************************************/
+
+
+
+
+/*
  * Zero a field
  */
 int zeroField(struct field_t* field){
@@ -159,6 +171,24 @@ int zeroField(struct field_t* field){
 }
 
 
+/*
+ * Create field
+ * (uses malloc() to allocate memory for field..
+ * Don't forget to call destroyField()
+ *
+ * Returns NULL if there is an error.
+ */
+struct  field_t* createField(char* name){
+	if (strlen(name) > IP_FIELD_NAME_SIZE){
+		printf("Field name is too long in createField().\n");
+		return NULL;
+	}
+
+	struct field_t* f= (struct field_t* ) malloc(sizeof(struct field_t));
+	strncpy(f->name,name,IP_FIELD_NAME_SIZE-1);
+	f->name[IP_FIELD_NAME_SIZE-1]='\0';
+	return f;
+}
 
 
 /*
@@ -530,6 +560,7 @@ int ip_CloseSharedMemory(SharedMemory_handle sm){
  */
 char* ip_GetSharedMemoryName(SharedMemory_handle sm){
 
+
 }
 
 /*
@@ -537,6 +568,7 @@ char* ip_GetSharedMemoryName(SharedMemory_handle sm){
  *
  */
 int ip_GetSharedMemorySize(SharedMemory_handle sm){
+	return sm->BufferSize;
 
 }
 
@@ -552,15 +584,47 @@ int ip_GetSharedMemorySize(SharedMemory_handle sm){
  *
  */
 int ip_GetSharedMemoryStatus(SharedMemory_handle sm){
+	if (sm==NULL){
+		return IP_DOES_NOT_EXIST;
+	}
 
+	if(sm->sd==NULL){
+		printf("Shared Data struct in shared memory is invalid.\n");
+		return IP_ERROR;
+	}
+
+	if (AcquireLock(sm)==IP_BUSY){
+		return IP_BUSY;
+
+	} else {
+
+		if (verifySharedDataStruct(sm->sd)==IP_ERROR){
+			ReleaseLock(sm);
+			printf("Shared Data struct in shared memory is invalid.\n");
+			return IP_ERROR;
+		}
+
+		ReleaseLock(sm);
+		return IP_SUCCESS;
+
+
+	}
 }
+
+
 
 int ip_SetSharedMemoryLockWaitTime(SharedMemory_handle sm, int time_ms){
-
+	if (sm!=NULL){
+		sm->lockWaitTime= (DWORD) time_ms;
+		return IP_SUCCESS;
+	} else {
+		return IP_ERROR;
+	}
 }
 
-int ip_GetSharedMemoryLockWaitTime(SharedMemory_handle sm, int time_ms){
-
+int ip_GetSharedMemoryLockWaitTime(SharedMemory_handle sm){
+	if (sm==NULL) return IP_ERROR;
+	return (int) sm->lockWaitTime;
 }
 
 
