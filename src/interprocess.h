@@ -49,10 +49,12 @@
 #define IP_FIELD_NAME_SIZE 16
 #define IP_FIELD_DATA_CONTAINER_SIZE 512
 
+/** Return Values **/
 #define IP_SUCCESS 0
 #define IP_ERROR -1
 #define IP_BUSY 1
 #define IP_DOES_NOT_EXIST -2
+#define IP_NO_MORE_ROOM -3
 
 
 

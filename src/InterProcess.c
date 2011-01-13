@@ -151,6 +151,12 @@ int verifySharedDataStruct(SharedData_t* sd);
  */
 struct  field_t* createField(char* name);
 
+int destroyField(struct field_t** f);
+
+/*
+ * Write data to a field
+ */
+int writeField(struct field_t* f, void *data, int dataSize);
 
 /*********************************************************************************/
 /*********************************************************************************/
@@ -190,6 +196,95 @@ struct  field_t* createField(char* name){
 	return f;
 }
 
+int destroyField(struct field_t** f){
+	if (*f==NULL){
+		return IP_SUCCESS;
+	}
+	zeroField(*f);
+	free(*f);
+	*f=NULL;
+	return IP_SUCCESS;
+}
+
+/*
+ * Write data to a field
+ */
+int writeField(struct field_t* f, void *data, int dataSize){
+	if (f==NULL) return IP_DOES_NOT_EXIST;
+
+	/** To be valid the field must have a legitimate name **/
+	if (f->name==NULL) return IP_ERROR;
+	if (strlen(f->name)==0) return IP_ERROR;
+
+	/** "delete" the current data in the field **/
+	f->size=0;
+
+	/** Copy in the new data **/
+	memcpy(f->data, data, dataSize);
+	f->size=dataSize;
+	return IP_SUCCESS;
+}
+
+/*
+ * Find field of a given name in a shared Data Struct
+ */
+int findField(struct field_t** f, struct SharedData_t* sd, char* name){
+	if (name==NULL) return IP_ERROR;
+	if (strlen(name)==0) return IP_ERROR;
+	if (verifySharedDataStruct(sd)==IP_ERROR) return IP_ERROR;
+
+	int k=0;
+	for (k = 0; k < sd->usedFields; ++k) {
+		if (strncmp(name,sd->fields[k].name,IP_FIELD_NAME_SIZE-1)==0){
+			/** Found a match! **/
+			*f=&(sd->fields[k]);
+			return IP_SUCCESS;
+		}
+	}
+	return IP_DOES_NOT_EXIST;
+}
+
+
+
+/*
+ * Adds a field to a shared data struct.
+ * If a field of the same name already exists, that field is overwritten
+ * The data object is full, the function returns IP_NO_MORE_ROOM, -3
+ * Otherwise the function returns IP_ERROR -1, or IP_SUCCES 0.
+ */
+int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd){
+	if (verifySharedDataStruct(sd)==IP_ERROR) return IP_ERROR;
+	if (f->name =NULL) return IP_ERROR;
+
+	struct field_t* dest_f=NULL;
+	if (findField(&dest_f,sd,f->name)==IP_SUCCES){
+		/** a field with that name already exists, so let's replace it **/
+		writeField(dest_f,f->data,f->size);
+	} else {
+		/** A field of that name doesn't already exist.**/
+		/** Let's see if we have room **/
+		if (sd->usedFields < sd->maxNumFields){
+			/** there is room **/
+			/*
+			 * ANDY PICK UP HERE
+			 * go to the n+1th field
+			 * write here
+			 * and when you write the delete function,
+			 * swap in the nth' field for the field you are deleting
+			 * (unless of course you happen to be deleting the n'th field)
+			 *
+			 */
+
+		} else {
+			/** no more room **/
+			return IP_NO_MORE_ROOM;
+		}
+
+
+	}
+
+
+}
 
 /*
  * Create Shared Memory Object
@@ -228,8 +323,6 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile, LPCTSTR p
     {
         printf("CreateMutex error: %d\n", GetLastError());
     }
-
-
 	return sm;
 }
 
