@@ -334,8 +334,12 @@ int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd){
 
 			/** write to the n+1th field **/
 			int ret=copyField(&(sd->fields[sd->usedFields]),f);
+			printf("In shared memory, *(sd->fields[sd->usedFields].data)is %d\n",(int) *(sd->fields[sd->usedFields].data) );
+
 			(sd->usedFields)++; /** important! increment # of fields used **/
 			if (ret==IP_ERROR) printf("unable to copy field in addFieldToSharedData()\n");
+
+
 			return ret;
 
 		} else {
@@ -870,6 +874,7 @@ int ip_WriteValue(SharedMemory_handle sm, char* fieldName, void *data, int dataS
 	/** Create the Field **/
 	struct field_t* f =createField(fieldName);
 	int ret=writeField(f,data,dataSize);
+	printf("Locally, f->data is %d\n",(int) *(f->data) );
 	if (ret==IP_SUCCESS){
 		ret =addFieldToSharedData(f,sm->sd);
 	}
@@ -916,7 +921,7 @@ int ip_ReadValue(SharedMemory_handle sm, char* fieldName, void *data){
 	struct field_t* f = NULL;
 	int ret=findField(&f,sm->sd,fieldName);
 	if (ret==IP_SUCCESS){
-		memcpy(&data,f->data,f->size);
+		memcpy(data,f->data,f->size);
 	}
 
 	ReleaseLock(sm);
