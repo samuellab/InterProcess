@@ -200,7 +200,7 @@ int ip_WriteValue(SharedMemory_handle sm, char* fieldName, void *data, int dataS
  *  IP_DOES_NOT_EXIST -2
  *
  */
-int ip_ReadValue(SharedMemory_handle sm, char* fieldName, void *data, int dataSize);
+int ip_ReadValue(SharedMemory_handle sm, char* fieldName, void *data);
 
 
 
