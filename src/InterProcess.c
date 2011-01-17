@@ -177,6 +177,14 @@ int deleteFieldFromSharedData(char* name, struct SharedData_t* sd);
  */
 int writeField(struct field_t* f, void *data, int dataSize);
 
+/*
+ * Copy a field
+ * IP_SUCCESS
+ * IP_ERROR
+ *
+ */
+int copyField(struct field_t* dest, struct field_t* src);
+
 /*********************************************************************************/
 /*********************************************************************************/
 /* 			P R I V A T E      F U N C T I O N S                                 */
@@ -226,14 +234,43 @@ int destroyField(struct field_t** f){
 }
 
 /*
+ * Copy a field
+ * IP_SUCCESS
+ * IP_ERROR
+ *
+ */
+int copyField(struct field_t* dest, struct field_t* src){
+	if (dest==NULL || src==NULL) return IP_ERROR;
+	if (strlen(src->name) > IP_FIELD_NAME_SIZE){
+			printf("Src field name is too long in copyField().\n");
+			return IP_ERROR;
+		}
+
+		zeroField(dest);
+
+		strncpy(dest->name,src->name,IP_FIELD_NAME_SIZE-1);
+		dest->name[IP_FIELD_NAME_SIZE-1]='\0';
+		memcpy(dest->data,src->data,src->size);
+		dest->size=src->size;
+		return IP_SUCCESS;
+}
+
+
+/*
  * Write data to a field
  */
 int writeField(struct field_t* f, void *data, int dataSize){
 	if (f==NULL) return IP_DOES_NOT_EXIST;
 
 	/** To be valid the field must have a legitimate name **/
-	if (f->name==NULL) return IP_ERROR;
-	if (strlen(f->name)==0) return IP_ERROR;
+	if (f->name==NULL){
+		printf("ERROR: name is null in writeField()\n");
+		return IP_ERROR;
+	}
+	if (strlen(f->name)==0){
+		printf("ERROR: name has two few characters\n");
+		return IP_ERROR;
+	}
 
 	/** "delete" the current data in the field **/
 	f->size=0;
@@ -243,6 +280,8 @@ int writeField(struct field_t* f, void *data, int dataSize){
 	f->size=dataSize;
 	return IP_SUCCESS;
 }
+
+
 
 /*
  * Find field of a given name in a shared Data Struct
@@ -272,28 +311,37 @@ int findField(struct field_t** f, struct SharedData_t* sd, char* name){
  * Otherwise the function returns IP_ERROR -1, or IP_SUCCES 0.
  */
 int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd){
-	if (verifySharedDataStruct(sd)==IP_ERROR) return IP_ERROR;
-	if (f->name ==NULL) return IP_ERROR;
+	if (verifySharedDataStruct(sd)==IP_ERROR){
+		printf("ERROR: shared data struct is invalid in addFieldToSharedData()");
+		return IP_ERROR;
+	}
+	if (f->name ==NULL){
+		printf("ERROR: name is null in addFieldToSharedData()");
+		return IP_ERROR;
+	}
 
-	struct field_t* dest_f=NULL;
+	struct field_t * dest_f=NULL;
 	if (findField(&dest_f,sd,f->name)==IP_SUCCESS){
 		/** a field with that name already exists, so let's replace it **/
-		writeField(dest_f,f->data,f->size);
+		copyField(dest_f,f);
 	} else {
 		/** A field of that name doesn't already exist.**/
 		/** Let's see if we have room **/
 		if (sd->usedFields < sd->maxNumFields){
 			/** there is room **/
 
+
+
 			/** write to the n+1th field **/
-			writeField( &(sd->fields[sd->usedFields]),f->data,f->size );
+			int ret=copyField(&(sd->fields[sd->usedFields]),f);
 			(sd->usedFields)++; /** important! increment # of fields used **/
+			if (ret==IP_ERROR) printf("unable to copy field in addFieldToSharedData()\n");
+			return ret;
 
 		} else {
 			/** no more room **/
 			return IP_NO_MORE_ROOM;
 		}
-
 
 	}
 
