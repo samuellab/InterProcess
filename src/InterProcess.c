@@ -287,7 +287,7 @@ int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd){
 
 			/** write to the n+1th field **/
 			writeField( &(sd->fields[sd->usedFields]),f->data,f->size );
-			(sd->usedFields)++; /** important! increment # of fields used **?
+			(sd->usedFields)++; /** important! increment # of fields used **/
 
 		} else {
 			/** no more room **/

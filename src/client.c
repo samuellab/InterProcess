@@ -18,7 +18,15 @@ int main(){
 	if(mySharedMemClient == NULL){
 		printf("creating shared memory failed.\n");
 	} else {
-		printf("Success!\n");
+		printf("Looking for value int_life\n");
+		int val=0;
+		int ret=ip_ReadValue(mySharedMemClient,"int_life",(void *) &val);
+		if (ret==IP_SUCCESS){
+			printf("Success!\n value is %d\n",val);
+		} else {
+			printf("ERROR! %d\n",ret);
+		}
+
 	}
 	ip_CloseSharedMemory(mySharedMemClient);
 	printf("Destroyed Shared Memory!\n");
