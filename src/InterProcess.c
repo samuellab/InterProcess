@@ -154,6 +154,25 @@ struct  field_t* createField(char* name);
 int destroyField(struct field_t** f);
 
 /*
+ * Adds a field to a shared data struct.
+ * If a field of the same name already exists, that field is overwritten
+ * The data object is full, the function returns IP_NO_MORE_ROOM, -3
+ * Otherwise the function returns IP_ERROR -1, or IP_SUCCES 0.
+ */
+int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd);
+
+
+/*
+ * Deletes a field to from a shared data struct given the field name.
+ * Internally, this function moves the last field into the place of the
+ * deleted field so that all used fields are contiguous.
+ *
+ * If the field does not exist, returns IP_ERROR -1
+ * Otherwise, IP_SUCCES 0.
+ */
+int deleteFieldFromSharedData(char* name, struct SharedData_t* sd);
+
+/*
  * Write data to a field
  */
 int writeField(struct field_t* f, void *data, int dataSize);
@@ -254,10 +273,10 @@ int findField(struct field_t** f, struct SharedData_t* sd, char* name){
  */
 int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd){
 	if (verifySharedDataStruct(sd)==IP_ERROR) return IP_ERROR;
-	if (f->name =NULL) return IP_ERROR;
+	if (f->name ==NULL) return IP_ERROR;
 
 	struct field_t* dest_f=NULL;
-	if (findField(&dest_f,sd,f->name)==IP_SUCCES){
+	if (findField(&dest_f,sd,f->name)==IP_SUCCESS){
 		/** a field with that name already exists, so let's replace it **/
 		writeField(dest_f,f->data,f->size);
 	} else {
@@ -265,15 +284,10 @@ int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd){
 		/** Let's see if we have room **/
 		if (sd->usedFields < sd->maxNumFields){
 			/** there is room **/
-			/*
-			 * ANDY PICK UP HERE
-			 * go to the n+1th field
-			 * write here
-			 * and when you write the delete function,
-			 * swap in the nth' field for the field you are deleting
-			 * (unless of course you happen to be deleting the n'th field)
-			 *
-			 */
+
+			/** write to the n+1th field **/
+			writeField( &(sd->fields[sd->usedFields]),f->data,f->size );
+			(sd->usedFields)++; /** important! increment # of fields used **?
 
 		} else {
 			/** no more room **/
@@ -283,8 +297,51 @@ int addFieldToSharedData(struct field_t* f, struct SharedData_t* sd){
 
 	}
 
-
 }
+
+
+/*
+ * Deletes a field to from a shared data struct given the field name.
+ * Internally, this function moves the last field into the place of the
+ * deleted field so that all used fields are contiguous.
+ *
+ * If the field does not exist, returns IP_DOES_NOT_EXIST -2
+ * Success IP_SUCCES 0.
+ * Error IP_ERROR
+ */
+int deleteFieldFromSharedData(char* name, struct SharedData_t* sd){
+	if (strlen(name) ==0) return IP_ERROR;
+	if (verifySharedDataStruct(sd)==IP_ERROR) return IP_ERROR;
+	if (sd->usedFields==0) return IP_DOES_NOT_EXIST; /** nothing to delete **/
+
+	struct field_t* dest_f=NULL; /** field to delete **/
+
+	if (findField(&dest_f,sd,name)==IP_SUCCESS){
+		/* delete the data in that field */
+		zeroField(dest_f);
+		if (sd->usedFields>1){ /** If there is more than one field present **/
+			/** copy the field in last place into the place where the deleted field was. **/
+			writeField(dest_f,sd->fields[sd->usedFields-1].data,sd->fields[sd->usedFields-1].size);
+
+			/** Clear the last field **/
+			zeroField(&(sd->fields[sd->usedFields-1]));
+		}
+		(sd->usedFields)--;
+
+	} else{
+		return IP_DOES_NOT_EXIST;
+	}
+}
+
+/*
+ * and when you write the delete function,
+ * swap in the nth' field for the field you are deleting
+ * (unless of course you happen to be deleting the n'th field)
+ *
+ */
+
+
+
 
 /*
  * Create Shared Memory Object
