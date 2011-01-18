@@ -29,7 +29,11 @@ int main(){
 		printf("Looking for value int_val\n");
 		val=0;
 		ret=ip_ReadValue(mySharedMemClient,"int_val",(void *) &val);
-		printf("Success!\n value is %d\n",val);
+		if (ret==IP_SUCCESS){
+			printf("Success!\n value is %d\n",val);
+		} else {
+			printf("ERROR! %d\n",ret);
+		}
 
 	}
 	ip_CloseSharedMemory(mySharedMemClient);
