@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#include "interprocess.h"
+#include "../src/interprocess.h"
 
 int main(){
 	printf("Welcome!\n");
