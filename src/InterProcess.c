@@ -943,6 +943,33 @@ int ip_ReadValue(SharedMemory_handle sm, char* fieldName, void *data){
  */
 int ip_ClearAllFields(SharedMemory_handle sm){
 
+	if (sm==NULL) return IP_DOES_NOT_EXIST;
+
+		if(sm->sd==NULL){
+			printf("Shared Data struct in shared memory is invalid.\n");
+			return IP_ERROR;
+		}
+
+		if (AcquireLock(sm)==IP_BUSY) return IP_BUSY;
+
+
+
+		if (verifySharedDataStruct(sm->sd)==IP_ERROR){
+			ReleaseLock(sm);
+			printf("Shared Data struct in shared memory is invalid.\n");
+			return IP_ERROR;
+		}
+
+
+	int k=0;
+	for (k = 0; k < sm->sd->usedFields; ++k) {
+		zeroField(&(sm->sd->fields[k]));
+
+	}
+
+	ReleaseLock(sm);
+	return IP_SUCCESS;
+
 }
 
 /*
@@ -953,7 +980,31 @@ int ip_ClearAllFields(SharedMemory_handle sm){
  *  IP_BUSY 1
  *
  */
-int ip_ClearField(SharedMemory_handle sm, char fieldName){
+int ip_ClearField(SharedMemory_handle sm, char* fieldName){
+	if (sm==NULL) return IP_DOES_NOT_EXIST;
+
+	if(sm->sd==NULL){
+		printf("Shared Data struct in shared memory is invalid.\n");
+		return IP_ERROR;
+	}
+
+	if (AcquireLock(sm)==IP_BUSY) return IP_BUSY;
+
+
+
+	if (verifySharedDataStruct(sm->sd)==IP_ERROR){
+		ReleaseLock(sm);
+		printf("Shared Data struct in shared memory is invalid.\n");
+		return IP_ERROR;
+	}
+
+	struct field_t* f=NULL;
+	int ret=findField(&f,sm->sd,fieldName);
+	if (ret==IP_SUCCESS){
+		zeroField(f);
+	}
+	ReleaseLock(sm);
+	return ret;
 
 }
 
