@@ -825,7 +825,6 @@ int ip_WriteValue(SharedMemory_handle sm, char* fieldName, void *data,
 	/** Create the Field **/
 	struct field_t* f = createField(fieldName);
 	int ret = writeField(f, data, dataSize);
-	printf("Locally, f->data is %d\n", (int) *(f->data));
 	if (ret == IP_SUCCESS) {
 		ret = addFieldToSharedData(f, sm->sd);
 	}
