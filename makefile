@@ -42,3 +42,5 @@ run:
 .PHONY: clean
 clean:	
 	rm -rf *.o 
+	rm -rf bin/*.exe
+	rm -rf bin/*.o
