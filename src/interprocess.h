@@ -37,7 +37,7 @@
 #ifndef INTERPROCESS_H_
 #define INTERPROCESS_H_
 
-
+#include "InterProcess/src/interprocess.h"
 
 
 
@@ -46,7 +46,7 @@
 
 /** Hard code in the buffer sizes **/
 #define IP_BUF_SIZE 256000
-#define IP_FIELD_NAME_SIZE 16
+#define IP_FIELD_NAME_SIZE 32
 #define IP_FIELD_DATA_CONTAINER_SIZE 512
 
 /** Return Values **/
