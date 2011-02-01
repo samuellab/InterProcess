@@ -930,7 +930,7 @@ int ip_ReadValue(SharedMemory_handle sm, char* fieldName, void *data) {
 	ReleaseLock(sm);
 
 	/** Refractory Period **/
-	sleep(sm->ReadTimeDelay);// sleep the thread for a little bit so that other threads can capture lock
+	Sleep(sm->ReadTimeDelay);// sleep the thread for a little bit so that other threads can capture lock
 
 	return ret;
 
