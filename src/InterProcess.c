@@ -781,6 +781,57 @@ int ip_GetSharedMemoryLockWaitTime(SharedMemory_handle sm) {
 	return (int) sm->lockWaitTime;
 }
 
+
+/*
+ * Get The Refactory Period (Time Delay) for reading from shared memory
+ * time_ms stores the time delayin ms
+ *
+ * Both reading or writing a value locks the shared memory. By default, when a client
+ * successfully reads a value from shared memory, the client is forced to sleep for a specified time
+ * (default is 7ms). I call this the Read Time Delay.
+ *
+ * The Read Time Delay gives another process time to access the shared memory, and prevents an overly
+ * aggressive client from reading in a loop and hogging the lock.
+ *
+ * Note.. this implicitly prioritizes writing over reading.
+ *
+ * To turn off the Read Time Delay, set the time to zero.
+ *
+ * Returns IP_SUCCESS 0
+ * or IP_ERROR -1
+ *
+ */
+int ip_GetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int* time_ms){
+	if (sm==NULL) return IP_ERROR;
+	*time_ms = sm->ReadTimeDelay;
+	return IP_SUCCESS;
+}
+
+/*
+ * Set the number of milliseconds of the Read Time Delay.
+ *
+ * Both reading or writing a value locks the shared memory. By default, when a client
+ * successfully reads a value from shared memory, the client is forced to sleep for a specified time
+ * (default is 7ms). I call this the Read Time Delay.
+ *
+ * The Read Time Delay gives another process time to access the shared memory, and prevents an overly
+ * aggressive client from reading in a loop and hogging the lock.
+ *
+ * Note.. this implicitly prioritizes writing over reading.
+ *
+ * To turn off the Read Time Delay, set the time to zero.
+ * Returns IP_SUCCESS 0
+ * or IP_ERROR -1
+ */
+int ip_SetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int time_ms){
+	if (sm==NULL) return IP_ERROR;
+	sm->ReadTimeDelay=time_ms;
+	return IP_SUCCESS;
+}
+
+
+
+
 /*********************
  *
  *  Read/Write Memory

@@ -127,7 +127,8 @@ int ip_GetSharedMemoryStatus(SharedMemory_handle sm);
 
 
 /*
- * Return the number of milliseconds of the Read Time Delay.
+ * Get The Refactory Period (Time Delay) for reading from shared memory
+ * time_ms stores the time delayin ms
  *
  * Both reading or writing a value locks the shared memory. By default, when a client
  * successfully reads a value from shared memory, the client is forced to sleep for a specified time
@@ -139,8 +140,12 @@ int ip_GetSharedMemoryStatus(SharedMemory_handle sm);
  * Note.. this implicitly prioritizes writing over reading.
  *
  * To turn off the Read Time Delay, set the time to zero.
+ *
+ * Returns IP_SUCCESS 0
+ * or IP_ERROR -1
+ *
  */
-int ip_GetSharedMemoryReadTimeDelay(SharedMemory_handle sm);
+int ip_GetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int* time_ms);
 
 /*
  * Set the number of milliseconds of the Read Time Delay.
@@ -155,8 +160,10 @@ int ip_GetSharedMemoryReadTimeDelay(SharedMemory_handle sm);
  * Note.. this implicitly prioritizes writing over reading.
  *
  * To turn off the Read Time Delay, set the time to zero.
+ * Returns IP_SUCCESS 0
+ * or IP_ERROR -1
  */
-int ip_SetSharedMemoryReadTimeDelay(SharedMemory_handle sm, int time_ms);
+int ip_SetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int time_ms);
 
 
 
