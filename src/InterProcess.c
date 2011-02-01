@@ -801,7 +801,7 @@ int ip_GetSharedMemoryLockWaitTime(SharedMemory_handle sm) {
  * or IP_ERROR -1
  *
  */
-int ip_GetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int* time_ms){
+int ip_GetSharedMemoryReadRefractoryPeriodTimeDelay(SharedMemory_handle sm, int* time_ms){
 	if (sm==NULL) return IP_ERROR;
 	*time_ms = sm->ReadTimeDelay;
 	return IP_SUCCESS;
@@ -823,7 +823,7 @@ int ip_GetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int* 
  * Returns IP_SUCCESS 0
  * or IP_ERROR -1
  */
-int ip_SetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int time_ms){
+int ip_SetSharedMemoryReadRefractoryPeriodTimeDelay(SharedMemory_handle sm, int time_ms){
 	if (sm==NULL) return IP_ERROR;
 	sm->ReadTimeDelay=time_ms;
 	return IP_SUCCESS;

@@ -145,7 +145,7 @@ int ip_GetSharedMemoryStatus(SharedMemory_handle sm);
  * or IP_ERROR -1
  *
  */
-int ip_GetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int* time_ms);
+int ip_GetSharedMemoryReadRefractoryPeriodTimeDelay(SharedMemory_handle sm, int* time_ms);
 
 /*
  * Set the number of milliseconds of the Read Time Delay.
@@ -163,7 +163,7 @@ int ip_GetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int* 
  * Returns IP_SUCCESS 0
  * or IP_ERROR -1
  */
-int ip_SetSharedMemoryReadRefactoryPeriodTimeDelay(SharedMemory_handle sm, int time_ms);
+int ip_SetSharedMemoryReadRefractoryPeriodTimeDelay(SharedMemory_handle sm, int time_ms);
 
 
 
