@@ -39,6 +39,9 @@
 /** Time in ms a client thread should wait for a mutex to become available **/
 #define IP_WAIT_FOR_MUTEX_AVAILABILITY 4
 
+/** Default refactory period (time delay) for client reads in ms**/
+#define IP_DEFAULT_REFRACTORY_PERIOD 5
+
 /*
  * A field is the term I use for a variable that is stored in shared memory.
  */
@@ -394,7 +397,7 @@ SharedMemory_handle createSharedMemoryObj(char* name, HANDLE hMapFile,
 	strncpy(sm->name, name, IP_MAX_MEM_NAME_LENGTH - 1);
 	sm->name[IP_MAX_MEM_NAME_LENGTH - 1] = '\0';
 	sm->BufferSize = IP_BUF_SIZE;
-	sm->ReadTimeDelay = 7;
+	sm->ReadTimeDelay = IP_DEFAULT_REFRACTORY_PERIOD;
 	sm->pBuf = pBuf;
 	sm->hMapFile = hMapFile;
 	sm->sd = NULL;
@@ -925,6 +928,9 @@ int ip_ReadValue(SharedMemory_handle sm, char* fieldName, void *data) {
 	}
 
 	ReleaseLock(sm);
+
+	/** Refractory Period **/
+	sleep(sm->ReadTimeDelay);// sleep the thread for a little bit so that other threads can capture lock
 
 	return ret;
 
