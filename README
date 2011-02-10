@@ -1,0 +1,12 @@
+InterProcess is a fast and compact C library for Windows that allows two processes to access shared memory without collisions. 
+
+InterProcess creates a SharedMemory object that can contain a number of fields of which can have a value. The value of the field can be specified as any data type, whether an int, string or float. 
+
+InterProcess makes it fast and easy to access these shared variables without worrying about collisions or race conditions. 
+
+Under the hood, InterProcess is essentially a fancy wrapper for Window's CreateFileMapping() and MapViewOfFile(). It uses Windows Mutex objects to ensure that only one process can read or write to a field and any given time. 
+
+InterProcess was written by Andrew Leifer, leifer@fas.harvard.edu.
+
+It is released under the GNU General Public License without any warranty. 
+
